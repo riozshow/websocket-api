@@ -21,6 +21,14 @@ router.get('/:id', (req, res) => {
 });
 
 router.post('/', requireSeatsBody, (req, res) => {
+  if (
+    db.seats.some(
+      ({ seat, day }) => seat == req.body.seat && day == req.body.day
+    )
+  ) {
+    return res.status(400).json({ message: 'The slot is already taken...' });
+  }
+
   db.seats.push({
     id: v4(),
     ...req.body,
