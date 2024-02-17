@@ -2,21 +2,39 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const socket = require('socket.io');
+const mongoose = require('mongoose');
 
-const db = require('./db');
-
-const testimonialsApi = require('./routes/testimonialsAPI');
-const concertsApi = require('./routes/concertsAPI');
-const seatsApi = require('./routes/seatsAPI');
+const testimonialsRoutes = require('./routes/testimonials.routes');
+const concertsRoutes = require('./routes/concerts.routes');
+const seatsRoutes = require('./routes/seats.routes');
 
 const app = express();
+
+mongoose.connect('mongodb://0.0.0.0:27017/NewWaveDB', {
+  useNewUrlParser: true,
+});
+const db = mongoose.connection;
+
+db.once('open', () => {
+  console.log('Connected to the database');
+});
+db.on('error', (err) => console.log('Error ' + err));
+
+app.use((req, res, next) => {
+  req.db = db;
+  next();
+});
 
 app.use(express.static(path.join(__dirname, '/client/build')));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cors());
 
-const server = app.listen(process.env.PORT || 8000, () => {
+app.use('/api', testimonialsRoutes);
+app.use('/api', concertsRoutes);
+app.use('/api', seatsRoutes);
+
+const server = app.listen(process.env.PORT || 8000, async () => {
   console.log('Server is running on port: 8000');
 });
 
@@ -34,12 +52,6 @@ api.use((req, res, next) => {
   req.io = io;
   next();
 });
-
-app.use('/api', api);
-
-api.use('/testimonials', testimonialsApi);
-api.use('/concerts', concertsApi);
-api.use('/seats', seatsApi);
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '/client/build/index.html'));
