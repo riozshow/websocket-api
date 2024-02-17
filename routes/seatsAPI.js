@@ -35,6 +35,8 @@ router.post('/', requireSeatsBody, (req, res) => {
   });
 
   res.json({ message: 'OK' });
+
+  req.io.emit('updateSeats', db.seats);
 });
 
 router.put('/:id', requireSeatsBody, (req, res) => {

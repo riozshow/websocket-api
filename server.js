@@ -1,6 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const socket = require('socket.io');
+
+const db = require('./db');
 
 const testimonialsApi = require('./routes/testimonialsAPI');
 const concertsApi = require('./routes/concertsAPI');
@@ -13,7 +16,25 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cors());
 
+const server = app.listen(process.env.PORT || 8000, () => {
+  console.log('Server is running on port: 8000');
+});
+
+const io = socket(server);
+
+io.on('connection', (socket) => {
+  socket.on('login', () => {
+    socket.emit('updateSeats', db.seats);
+  });
+});
+
 const api = express.Router();
+
+api.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
 app.use('/api', api);
 
 api.use('/testimonials', testimonialsApi);
@@ -26,8 +47,4 @@ app.get('*', (req, res) => {
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Not found...' });
-});
-
-app.listen(process.env.PORT || 8000, () => {
-  console.log('Server is running on port: 8000');
 });
