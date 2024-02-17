@@ -3,6 +3,9 @@ const cors = require('cors');
 const path = require('path');
 const socket = require('socket.io');
 const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+
+const Seat = require('./models/seat.model');
 
 const testimonialsRoutes = require('./routes/testimonials.routes');
 const concertsRoutes = require('./routes/concerts.routes');
@@ -10,9 +13,9 @@ const seatsRoutes = require('./routes/seats.routes');
 
 const app = express();
 
-mongoose.connect('mongodb://0.0.0.0:27017/NewWaveDB', {
-  useNewUrlParser: true,
-});
+dotenv.config();
+
+mongoose.connect(process.env.DB_URI);
 const db = mongoose.connection;
 
 db.once('open', () => {
@@ -41,8 +44,8 @@ const server = app.listen(process.env.PORT || 8000, async () => {
 const io = socket(server);
 
 io.on('connection', (socket) => {
-  socket.on('login', () => {
-    socket.emit('updateSeats', db.seats);
+  socket.on('login', async () => {
+    socket.emit('updateSeats', await Seat.find());
   });
 });
 
