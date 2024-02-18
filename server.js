@@ -15,7 +15,11 @@ const app = express();
 
 dotenv.config();
 
-mongoose.connect(process.env.DB_URI);
+mongoose.connect(
+  process.env.NODE_ENV !== 'test'
+    ? process.env.DB_URI
+    : 'mongodb://0.0.0.0:27017/NewWaveDBtest'
+);
 const db = mongoose.connection;
 
 db.once('open', () => {
@@ -63,3 +67,5 @@ app.get('*', (req, res) => {
 app.use((req, res) => {
   res.status(404).json({ message: 'Not found...' });
 });
+
+module.exports = server;
